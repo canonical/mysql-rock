@@ -1,0 +1,70 @@
+name: charmed-mysql
+base: ubuntu@22.04
+version: '8.0.41'
+summary: MySQL rock OCI
+description: |
+    MySQL built from the official MySQL package
+    from the MySQL repository and installs
+    mysql-shell. For more information on rocks, visit
+    the https://github.com/canonical/rockcraft.
+license: Apache-2.0
+platforms:
+    amd64:
+    arm64:
+
+parts:
+    mysql:
+        plugin: nil
+        stage-packages:
+            - mysql-client-8.0
+            - mysql-server-core-8.0
+        overlay-script: |
+            # The mysql-server post-installation doesn't have an explicit way to disable the mysql_install_db path
+            # besides having a database already "configured" (ie, stuff in /var/lib/mysql/mysql)
+            rm -rf /var/lib/mysql
+        organize:
+            usr/share/doc/mysql-client-8.0/copyright: licenses/COPYRIGHT-mysql-client-8.0
+            usr/share/doc/mysql-server-core-8.0/copyright: licenses/LICENSE-mysql-server-core-8.0
+    non-root-user:
+        plugin: nil
+        after:
+            - mysql
+        overlay-script: |
+            # Create a user in the $CRAFT_OVERLAY chroot
+            groupadd -R $CRAFT_OVERLAY -g 584788 mysql
+            useradd -R $CRAFT_OVERLAY --create-home -r -g mysql -u 584788 mysql
+        override-prime: |
+            craftctl default
+            mkdir -p $CRAFT_PRIME/var/lib/mysql
+            mkdir -p $CRAFT_PRIME/var/run/mysqld
+            chown -R 584788 $CRAFT_PRIME/var/lib/mysql*
+            chown -R 584788 $CRAFT_PRIME/var/run/mysqld
+            chown -R 584788 $CRAFT_PRIME/etc/mysql
+            # Generate dpkg.query
+            mkdir -p $CRAFT_PRIME/usr/share/rocks
+            echo "# os-release" > $CRAFT_PRIME/usr/share/rocks/dpkg.query
+            echo "# dpkg-query" >> $CRAFT_PRIME/usr/share/rocks/dpkg.query
+            declare -a fields
+            fields+=('${db:Status-Abbrev}')
+            fields+=('${binary:Package}')
+            fields+=('${Version}')
+            fields+=('${source:Package}')
+            fields+=('${Source:Version}')
+            printf -v dpkg_ops '%s,' "${fields[@]}"
+            dpkg-query -W -f "${dpkg_ops}\n" >> $CRAFT_PRIME/usr/share/rocks/dpkg.query
+    rock-config:
+        plugin: dump
+        source: .
+        source-type: local
+        stage:
+            - etc/mysql/
+        organize:
+            config: etc/mysql/config
+    rock-license:
+        plugin: dump
+        source: .
+        source-type: local
+        stage:
+            - licenses/LICENSE-rock
+        organize:
+            LICENSE: licenses/LICENSE-rock
