@@ -10,19 +10,32 @@ platforms:
     amd64:
     arm64:
 
+environment:
+    TZ: UTC
+
+services:
+  mysql:
+    override: replace
+    command: sh -c "/usr/local/bin/entrypoint.sh"
+    startup: enabled
+    user: mysql
+    group: mysql
+
 parts:
     mysql:
         plugin: nil
         stage-packages:
+            - gosu
             - mysql-client-8.0
             - mysql-server-core-8.0
-        overlay-script: |
-            # The mysql-server post-installation doesn't have an explicit way to disable the mysql_install_db path
-            # besides having a database already "configured" (ie, stuff in /var/lib/mysql/mysql)
-            rm -rf /var/lib/mysql
+            - openssl
+            - pwgen
         organize:
+            usr/share/doc/gosu/copyright: licenses/COPYRIGHT-gosu
             usr/share/doc/mysql-client-8.0/copyright: licenses/COPYRIGHT-mysql-client-8.0
-            usr/share/doc/mysql-server-core-8.0/copyright: licenses/LICENSE-mysql-server-core-8.0
+            usr/share/doc/mysql-server-core-8.0/copyright: licenses/COPYRIGHT-mysql-server-core-8.0
+            usr/share/doc/openssl/copyright: licenses/COPYRIGHT-openssl
+            usr/share/doc/pwgen/copyright: licenses/COPYRIGHT-pwgen
     non-root-user:
         plugin: nil
         after:
@@ -58,6 +71,14 @@ parts:
             - etc/mysql/
         organize:
             config: etc/mysql/config
+    rock-entrypoint:
+        plugin: dump
+        source: .
+        source-type: local
+        stage:
+            - usr/local/bin/
+        organize:
+            scripts/entrypoint.sh: /usr/local/bin/entrypoint.sh
     rock-license:
         plugin: dump
         source: .

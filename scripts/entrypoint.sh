@@ -97,30 +97,8 @@ mysql_get_config() {
 
 # Do a temporary startup of the MySQL server, for init purposes
 docker_temp_server_start() {
-	if [ "${MYSQL_MAJOR}" = '5.6' ] || [ "${MYSQL_MAJOR}" = '5.7' ]; then
-		"$@" --skip-networking --socket="${SOCKET}" &
-		mysql_note "Waiting for server startup"
-		local i
-		for i in {30..0}; do
-			# only use the root password if the database has already been initialized
-			# so that it won't try to fill in a password file when it hasn't been set yet
-			extraArgs=()
-			if [ -z "$DATABASE_ALREADY_EXISTS" ]; then
-				extraArgs+=( '--dont-use-mysql-root-password' )
-			fi
-			if docker_process_sql "${extraArgs[@]}" --database=mysql <<<'SELECT 1' &> /dev/null; then
-				break
-			fi
-			sleep 1
-		done
-		if [ "$i" = 0 ]; then
-			mysql_error "Unable to start server."
-		fi
-	else
-		# For 5.7+ the server is ready for use as soon as startup command unblocks
-		if ! "$@" --daemonize --skip-networking --socket="${SOCKET}"; then
-			mysql_error "Unable to start server."
-		fi
+	if ! "$@" --daemonize --skip-networking --socket="${SOCKET}"; then
+		mysql_error "Unable to start server."
 	fi
 }
 
@@ -157,11 +135,7 @@ docker_create_db_directories() {
 # initializes the database directory
 docker_init_database_dir() {
 	mysql_note "Initializing database files"
-	if [ "$MYSQL_MAJOR" = '5.6' ]; then
-		mysql_install_db --datadir="$DATADIR" --rpm --keep-my-cnf "${@:2}"
-	else
-		"$@" --initialize-insecure
-	fi
+	"$@" --initialize-insecure
 	mysql_note "Database files initialized"
 
 	if command -v mysql_ssl_rsa_setup > /dev/null && [ ! -e "$DATADIR/server-key.pem" ]; then
@@ -239,25 +213,10 @@ docker_setup_db() {
 	fi
 
 	local passwordSet=
-	if [ "$MYSQL_MAJOR" = '5.6' ]; then
-		# no, we don't care if read finds a terminating character in this heredoc (see above)
-		read -r -d '' passwordSet <<-EOSQL || true
-			DELETE FROM mysql.user WHERE user NOT IN ('mysql.sys', 'mysqlxsys', 'root') OR host NOT IN ('localhost') ;
-			SET PASSWORD FOR 'root'@'localhost'=PASSWORD('${MYSQL_ROOT_PASSWORD}') ;
 
-			-- 5.5: https://github.com/mysql/mysql-server/blob/e48d775c6f066add457fa8cfb2ebc4d5ff0c7613/scripts/mysql_secure_installation.sh#L192-L210
-			-- 5.6: https://github.com/mysql/mysql-server/blob/06bc670db0c0e45b3ea11409382a5c315961f682/scripts/mysql_secure_installation.sh#L218-L236
-			-- 5.7: https://github.com/mysql/mysql-server/blob/913071c0b16cc03e703308250d795bc381627e37/client/mysql_secure_installation.cc#L792-L818
-			-- 8.0: https://github.com/mysql/mysql-server/blob/b93c1661d689c8b7decc7563ba15f6ed140a4eb6/client/mysql_secure_installation.cc#L726-L749
-			DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%' ;
-			-- https://github.com/docker-library/mysql/pull/479#issuecomment-414561272 ("This is only needed for 5.5 and 5.6")
-		EOSQL
-	else
-		# no, we don't care if read finds a terminating character in this heredoc (see above)
-		read -r -d '' passwordSet <<-EOSQL || true
-			ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' ;
-		EOSQL
-	fi
+	read -r -d '' passwordSet <<-EOSQL || true
+		ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' ;
+	EOSQL
 
 	# tell docker_process_sql to not use MYSQL_ROOT_PASSWORD since it is just now being set
 	docker_process_sql --dont-use-mysql-root-password --database=mysql <<-EOSQL
@@ -303,8 +262,7 @@ _mysql_passfile() {
 	fi
 }
 
-# Mark root user as expired so the password must be changed before anything
-# else can be done (only supported for 5.6+)
+# Mark root user as expired so the password must be changed before anything else can be done
 mysql_expire_root_user() {
 	if [ -n "$MYSQL_ONETIME_PASSWORD" ]; then
 		docker_process_sql --database=mysql <<-EOSQL
@@ -313,8 +271,7 @@ mysql_expire_root_user() {
 	fi
 }
 
-# check arguments for an option that would cause mysqld to stop
-# return true if there is one
+# check arguments for an option that would cause mysqld to stop return true if there is one
 _mysql_want_help() {
 	local arg
 	for arg; do
