@@ -44,5 +44,5 @@ See [LICENSE][repo-license].
 
 [release-badge]: https://github.com/canonical/mysql-rock/actions/workflows/release.yaml/badge.svg
 [release-link]: https://github.com/canonical/mysql-rock/actions/workflows/release.yaml
-[repo-license]: https://github.com/canonical/mysql-rock/blob/8.0-22.04/LICENSE
+[repo-license]: https://github.com/canonical/mysql-rock/blob/8.0-20.04/LICENSE
 [repo-rockcraft]: https://github.com/canonical/rockcraft
