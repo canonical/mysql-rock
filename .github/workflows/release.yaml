@@ -51,13 +51,15 @@ jobs:
           echo YQ=$(go env GOPATH)/bin/yq >> $GITHUB_ENV
       - name: Set image version to environment
         run: |
-          echo IMAGE_MYSQL_MAJOR_VERSION=$($YQ '.version | split(".").0 // ""' rockcraft.yaml) >> $GITHUB_ENV
-          echo IMAGE_MYSQL_MINOR_VERSION=$($YQ '.version | split(".").1 // ""' rockcraft.yaml) >> $GITHUB_ENV
-          echo IMAGE_OS_VERSION=$($YQ '.base | split("@").1' rockcraft.yaml) >> $GITHUB_ENV
+          echo END_OF_LIFE=$(date -d "$(date +'%Y-%m-%d') + 5 years" "+%Y-%m-%d") >> $GITHUB_ENV
+          echo MYSQL_MAJOR_VERSION=$($YQ '.version | split(".").0 // ""' rockcraft.yaml) >> $GITHUB_ENV
+          echo MYSQL_MINOR_VERSION=$($YQ '.version | split(".").1 // ""' rockcraft.yaml) >> $GITHUB_ENV
+          echo OS_VERSION=$($YQ '.base | split("@").1' rockcraft.yaml) >> $GITHUB_ENV
       - name: Release
         run: |
           $OCI_FACTORY upload -y --release \
-            track=${IMAGE_MYSQL_MAJOR_VERSION}.${IMAGE_MYSQL_MINOR_VERSION}-${IMAGE_OS_VERSION},\
+            eol=${END_OF_LIFE},\
+            track=${MYSQL_MAJOR_VERSION}.${MYSQL_MINOR_VERSION}-${OS_VERSION},\
             risks=edge
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
