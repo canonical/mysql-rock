@@ -70,7 +70,8 @@ parts:
         stage:
             - etc/mysql/
         organize:
-            config: etc/mysql/config
+            config/conf.d: /etc/mysql/conf.d
+            config/my.cnf: /etc/mysql/my.cnf
     rock-entrypoint:
         plugin: dump
         source: .
