@@ -16,7 +16,7 @@ environment:
 services:
     mysql:
         override: replace
-        command: sh -c "/usr/local/bin/entrypoint.sh"
+        command: sh -c "/usr/local/bin/entrypoint.sh mysqld"
         startup: enabled
         user: mysql
         group: mysql
@@ -70,7 +70,8 @@ parts:
         stage:
             - etc/mysql/
         organize:
-            config: etc/mysql/config
+            config/conf.d: /etc/mysql/conf.d
+            config/my.cnf: /etc/mysql/my.cnf
     rock-entrypoint:
         plugin: dump
         source: .

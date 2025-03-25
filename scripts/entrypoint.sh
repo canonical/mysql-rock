@@ -47,37 +47,6 @@ _is_sourced() {
 		&& [ "${FUNCNAME[1]}" = 'source' ]
 }
 
-# usage: docker_process_init_files [file [file [...]]]
-#    ie: docker_process_init_files /always-initdb.d/*
-# process initializer files, based on file extensions
-docker_process_init_files() {
-	# mysql here for backwards compatibility "${mysql[@]}"
-	mysql=( docker_process_sql )
-
-	echo
-	local f
-	for f; do
-		case "$f" in
-			*.sh)
-				# https://github.com/docker-library/postgres/issues/450#issuecomment-393167936
-				# https://github.com/docker-library/postgres/pull/452
-				if [ -x "$f" ]; then
-					mysql_note "$0: running $f"
-					"$f"
-				else
-					mysql_note "$0: sourcing $f"
-					. "$f"
-				fi
-				;;
-			*.sql)    mysql_note "$0: running $f"; docker_process_sql < "$f"; echo ;;
-			*.sql.gz) mysql_note "$0: running $f"; gunzip -c "$f" | docker_process_sql; echo ;;
-			*.sql.xz) mysql_note "$0: running $f"; xzcat "$f" | docker_process_sql; echo ;;
-			*)        mysql_warn "$0: ignoring $f" ;;
-		esac
-		echo
-	done
-}
-
 mysql_check_config() {
 	local toRun=( "$@" --verbose --help ) errors
 	if ! errors="$("${toRun[@]}" 2>&1 >/dev/null)"; then
@@ -309,9 +278,6 @@ _main() {
 		if [ -z "$DATABASE_ALREADY_EXISTS" ]; then
 			docker_verify_minimum_env
 
-			# check dir permissions to reduce likelihood of half-initialized database
-			ls /docker-entrypoint-initdb.d/ > /dev/null
-
 			docker_init_database_dir "$@"
 
 			mysql_note "Starting temporary server"
@@ -319,7 +285,6 @@ _main() {
 			mysql_note "Temporary server started."
 
 			docker_setup_db
-			docker_process_init_files /docker-entrypoint-initdb.d/*
 
 			mysql_expire_root_user
 
