@@ -28,10 +28,45 @@ jobs:
       packages: write  # Needed to publish to GitHub Container Registry
       contents: write  # Needed to create GitHub release
 
+  oci-factory:
+    name: Update OCI-Factory
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Golang setup
+        uses: actions/setup-go@v5
+        with:
+          go-version: ">=1.22.0"
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install git
+          sudo apt install yq
+          go install github.com/canonical/oci-factory/tools/cli-client/cmd/oci-factory@latest
+      - name: Set binary paths to environment
+        run: |
+          echo OCI_FACTORY=$(go env GOPATH)/bin/oci-factory >> $GITHUB_ENV
+      - name: Set image version to environment
+        run: |
+          echo END_OF_LIFE=$(date -d "+ 5 years" "+%Y-%m-%d") >> $GITHUB_ENV
+          echo MYSQL_MAJOR_VERSION=$(yq '.version | split(".").0 // ""' rockcraft.yaml) >> $GITHUB_ENV
+          echo MYSQL_MINOR_VERSION=$(yq '.version | split(".").1 // ""' rockcraft.yaml) >> $GITHUB_ENV
+          echo OS_VERSION=$(yq '.base | split("@").1' rockcraft.yaml) >> $GITHUB_ENV
+      - name: Release
+        run: |
+          $OCI_FACTORY upload -y --release \
+            eol=${END_OF_LIFE},\
+            track=${MYSQL_MAJOR_VERSION}.${MYSQL_MINOR_VERSION}-${OS_VERSION},\
+            risks=edge
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
+
   sbom:
     name: Generate Software Bill of Materials
     needs:
-      - build
       - release
     runs-on: ubuntu-latest
     timeout-minutes: 5
