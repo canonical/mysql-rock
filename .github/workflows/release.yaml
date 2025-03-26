@@ -28,6 +28,38 @@ jobs:
       packages: write  # Needed to publish to GitHub Container Registry
       contents: write  # Needed to create GitHub release
 
+  sbom:
+    name: Generate Software Bill of Materials
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install Syft
+        run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+      - name: Download rock package(s)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ needs.build.outputs.artifact-prefix }}-*
+          merge-multiple: true
+      - name: Generate SBOM(s)
+        shell: python
+        run: |
+          import pathlib
+          import subprocess
+
+          for rock_file in pathlib.Path(".").glob("*.rock"):
+              subprocess.run(
+                  ["syft", rock_file.name, "--output", f"spdx-json={rock_file.name}.spdx.json"],
+                  check=True,
+              )
+      - name: Upload SBOM(s)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ needs.build.outputs.artifact-prefix }}
+          path: '*.spdx.json'
+          if-no-files-found: error
+
   oci-factory:
     name: Update OCI-Factory
     needs:
@@ -63,35 +95,3 @@ jobs:
             risks=edge
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
-
-  sbom:
-    name: Generate Software Bill of Materials
-    needs:
-      - release
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Install Syft
-        run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-      - name: Download rock package(s)
-        uses: actions/download-artifact@v4
-        with:
-          pattern: ${{ needs.build.outputs.artifact-prefix }}-*
-          merge-multiple: true
-      - name: Generate SBOM(s)
-        shell: python
-        run: |
-          import pathlib
-          import subprocess
-
-          for rock_file in pathlib.Path(".").glob("*.rock"):
-              subprocess.run(
-                  ["syft", rock_file.name, "--output", f"spdx-json={rock_file.name}.spdx.json"],
-                  check=True,
-              )
-      - name: Upload SBOM(s)
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom-${{ needs.build.outputs.artifact-prefix }}
-          path: '*.spdx.json'
-          if-no-files-found: error
