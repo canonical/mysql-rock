@@ -90,8 +90,6 @@ jobs:
       - name: Release
         run: |
           $OCI_FACTORY upload -y --release \
-            eol=${END_OF_LIFE},\
-            track=${MYSQL_MAJOR_VERSION}.${MYSQL_MINOR_VERSION}-${OS_VERSION},\
-            risks=edge
+            track=${MYSQL_MAJOR_VERSION}.${MYSQL_MINOR_VERSION}-${OS_VERSION},eol=${END_OF_LIFE},risks=edge
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
