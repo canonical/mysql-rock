@@ -30,8 +30,8 @@ sudo lxd init --auto
 
 ### Packing and Running the rock
 ```bash
-sudo rockcraft pack
-sudo rockcraft.skopeo --insecure-policy copy oci-archive:mysql*.rock docker-daemon:<username>/mysql:<tag>
+rockcraft pack
+rockcraft.skopeo --insecure-policy copy oci-archive:mysql*.rock docker-daemon:<username>/mysql:<tag>
 docker run --rm -it <username>/mysql:<tag>
 ```
 
