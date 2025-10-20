@@ -23,6 +23,13 @@ services:
         group: mysql
 
 parts:
+    apt:
+      plugin: nil
+      override-build: |
+        apt update
+        apt -y upgrade
+        apt -y dist-upgrade
+        craftctl default
     mysql:
         plugin: nil
         stage-packages:
