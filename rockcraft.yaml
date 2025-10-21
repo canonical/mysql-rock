@@ -26,6 +26,8 @@ parts:
     apt:
       plugin: nil
       override-build: |
+        # base image has outdated apt sources. See:
+        # https://github.com/canonical/rockcraft/issues/1005
         apt update
         apt -y upgrade
         apt -y dist-upgrade
