@@ -1,0 +1,8 @@
+summary: MySQL versions test
+
+execute: |
+  echo "Running versions test..."
+
+  ROCK_VERSION="$(awk '/^version: /{gsub(/'"'"'/, "", $2); print $2;exit}' "${SPREAD_PATH}"/rockcraft.yaml)"
+  mysql -h 127.0.0.1 --password=myS3cr3tp@ss -P 3432 -u root -e "select @@version;" | grep -q -e "^${ROCK_VERSION}"
+
