@@ -1,6 +1,6 @@
 name: mysql
 base: ubuntu@24.04
-version: '8.0.43'
+version: '8.0.44'
 summary: MySQL rock OCI
 description: |
     MySQL built from the official MySQL package from the MySQL repository.
@@ -23,48 +23,43 @@ services:
         group: mysql
 
 parts:
-    apt:
-      plugin: nil
-      override-build: |
-        # base image has outdated apt sources. See:
-        # https://github.com/canonical/rockcraft/issues/1005
-        apt update
-        apt -y upgrade
-        apt -y dist-upgrade
-        craftctl default
     mysql:
         plugin: nil
-        stage-packages:
+        overlay-packages:
             - gosu
+            - tzdata
             - mysql-client-8.0
             - mysql-server-core-8.0
             - openssl
             - pwgen
-        organize:
-            usr/share/doc/gosu/copyright: licenses/COPYRIGHT-gosu
-            usr/share/doc/mysql-client-8.0/copyright: licenses/COPYRIGHT-mysql-client-8.0
-            usr/share/doc/mysql-server-core-8.0/copyright: licenses/COPYRIGHT-mysql-server-core-8.0
-            usr/share/doc/openssl/copyright: licenses/COPYRIGHT-openssl
-            usr/share/doc/pwgen/copyright: licenses/COPYRIGHT-pwgen
+        overlay-script: |
+            craftctl default
+            mkdir -p $CRAFT_OVERLAY/licenses
+            mv $CRAFT_OVERLAY/usr/share/doc/gosu/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-gosu
+            mv $CRAFT_OVERLAY/usr/share/doc/mysql-client-8.0/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-client-8.0
+            mv $CRAFT_OVERLAY/usr/share/doc/mysql-server-core-8.0/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-server-core-8.0
+            mv $CRAFT_OVERLAY/usr/share/doc/openssl/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-openssl
+            mv $CRAFT_OVERLAY/usr/share/doc/pwgen/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-pwgen
+            rm -rf $CRAFT_OVERLAY/etc/mysql
     non-root-user:
         plugin: nil
         after:
             - mysql
         overlay-script: |
+            craftctl default
             # Create a user in the $CRAFT_OVERLAY chroot
             groupadd -R $CRAFT_OVERLAY -g 584788 mysql
             useradd -R $CRAFT_OVERLAY --create-home -r -g mysql -u 584788 mysql
-        override-prime: |
-            craftctl default
-            mkdir -p $CRAFT_PRIME/var/lib/mysql
-            mkdir -p $CRAFT_PRIME/var/run/mysqld
-            chown -R 584788 $CRAFT_PRIME/var/lib/mysql*
-            chown -R 584788 $CRAFT_PRIME/var/run/mysqld
-            chown -R 584788 $CRAFT_PRIME/etc/mysql
+            mkdir -p $CRAFT_OVERLAY/var/lib/mysql
+            mkdir -p $CRAFT_OVERLAY/run/mysqld
+            mkdir -p $CRAFT_OVERLAY/etc/mysql
+            chown -R 584788 $CRAFT_OVERLAY/var/lib/mysql*
+            chown -R 584788 $CRAFT_OVERLAY/run/mysqld
+            chown -R 584788 $CRAFT_OVERLAY/etc/mysql
             # Generate dpkg.query
-            mkdir -p $CRAFT_PRIME/usr/share/rocks
-            echo "# os-release" > $CRAFT_PRIME/usr/share/rocks/dpkg.query
-            echo "# dpkg-query" >> $CRAFT_PRIME/usr/share/rocks/dpkg.query
+            mkdir -p $CRAFT_OVERLAY/usr/share/rocks
+            echo "# os-release" > $CRAFT_OVERLAY/usr/share/rocks/dpkg.query
+            echo "# dpkg-query" >> $CRAFT_OVERLAY/usr/share/rocks/dpkg.query
             declare -a fields
             fields+=('${db:Status-Abbrev}')
             fields+=('${binary:Package}')
@@ -72,16 +67,7 @@ parts:
             fields+=('${source:Package}')
             fields+=('${Source:Version}')
             printf -v dpkg_ops '%s,' "${fields[@]}"
-            dpkg-query -W -f "${dpkg_ops}\n" >> $CRAFT_PRIME/usr/share/rocks/dpkg.query
-    rock-config:
-        plugin: dump
-        source: .
-        source-type: local
-        stage:
-            - etc/mysql/
-        organize:
-            config/conf.d: /etc/mysql/conf.d
-            config/my.cnf: /etc/mysql/my.cnf
+            dpkg-query -W -f "${dpkg_ops}\n" --root=${CRAFT_OVERLAY} >> $CRAFT_OVERLAY/usr/share/rocks/dpkg.query
     rock-entrypoint:
         plugin: dump
         source: .
@@ -98,3 +84,13 @@ parts:
             - licenses/LICENSE-rock
         organize:
             LICENSE: licenses/LICENSE-rock
+    mysql-config:
+        plugin: dump
+        source: .
+        source-type: local
+        stage:
+            - etc/mysql
+        organize:
+            config/conf.d: /etc/mysql/conf.d
+            config/my.cnf: /etc/mysql/my.cnf
+
