@@ -21,7 +21,6 @@ jobs:
   test:
     name: Test rock | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
     timeout-minutes: 10
-    # runs-on: [self-hosted, linux, "${{ matrix.platform.host_arch }}", "${{ matrix.base.codename }}", large]
     runs-on: "ubuntu-${{ matrix.base.version }}${{ matrix.platform.gh_suffix }}"
     strategy:
       fail-fast: false
