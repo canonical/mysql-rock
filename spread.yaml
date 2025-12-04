@@ -1,0 +1,40 @@
+project: mysql-rock
+
+backends:
+  craft:
+    type: craft
+    systems:
+      - ubuntu-24.04
+
+suites:
+  spread/tests/:
+    summary: General integration tests
+
+    prepare: |
+      # For 'rockcraft.skopeo'
+      snap install rockcraft --classic --edge
+      snap install docker
+
+      # Wait for docker daemon to come online
+      apt install -y retry
+      retry --times=10 --delay 2 -- docker run hello-world
+
+      # Load the rock into docker
+      rockcraft.skopeo --insecure-policy copy "oci-archive:$CRAFT_ARTIFACT" docker-daemon:mysql:spreadtest
+
+      # Install mysql client
+      apt update
+      apt install -y mysql-client
+    prepare-each: |
+      docker run -d --rm -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss -p 3432:3306 --name "${SPREAD_TASK//\//_}" mysql:spreadtest
+      # wait for initialization
+      docker exec "${SPREAD_TASK//\//_}" bash -c 'until mysql -u root --password=myS3cr3tp@ss -h localhost -e "select now();"; do sleep 1; done'
+    restore-each: |
+      docker kill "${SPREAD_TASK//\//_}" || true
+    restore: |
+      docker image rm --force mysql:spreadtest
+
+exclude:
+  - .git
+
+kill-timeout: 1h
