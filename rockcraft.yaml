@@ -95,5 +95,4 @@ parts:
         stage:
             - etc/mysql
         organize:
-            config/conf.d: /etc/mysql/conf.d
             config/my.cnf: /etc/mysql/my.cnf
