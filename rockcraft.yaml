@@ -1,5 +1,5 @@
 name: mysql
-base: ubuntu@26.04
+base: bare
 build-base: devel
 version: '8.4.8'
 summary: MySQL rock OCI
@@ -28,38 +28,53 @@ parts:
         plugin: dump
         source: bld:mysql
         source-channel: 8.4-26.04/edge
-        overlay-packages:
+        stage-packages:
             - libicu78
             - libprotobuf-lite32t64
             - libaio1t64
             - libgoogle-perftools4t64
             - libedit2
+            - liblz4-1
+            - coreutils-from-uutils
+            - mawk
+            - sed
             - tzdata
             - openssl
-        overlay-script: |
-            craftctl default
-            mkdir -p $CRAFT_OVERLAY/licenses
-            mv $CRAFT_OVERLAY/usr/share/doc/openssl/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-openssl
-            rm -rf $CRAFT_OVERLAY/etc/mysql
+            - dash
+            - bash
+        stage:
+            - -etc/mysql
+        organize:
+            usr/share/doc/mysql-client-8.0/copyright: licenses/COPYRIGHT-mysql-client-8.0
+            usr/share/doc/mysql-server-core-8.0/copyright: licenses/COPYRIGHT-mysql-server-core-8.0
+            usr/share/doc/openssl/copyright: licenses/COPYRIGHT-openssl
+            usr/share/doc/pwgen/copyright: licenses/COPYRIGHT-pwgen
     non-root-user:
         plugin: nil
         after:
             - mysql
-        overlay-script: |
+        override-build: |
             craftctl default
-            # Create a user in the $CRAFT_OVERLAY chroot
-            groupadd -R $CRAFT_OVERLAY -g 584788 mysql
-            useradd -R $CRAFT_OVERLAY --create-home -r -g mysql -u 584788 mysql
-            mkdir -p $CRAFT_OVERLAY/var/lib/mysql
-            mkdir -p $CRAFT_OVERLAY/run/mysqld
-            mkdir -p $CRAFT_OVERLAY/etc/mysql
-            chown -R 584788 $CRAFT_OVERLAY/var/lib/mysql*
-            chown -R 584788 $CRAFT_OVERLAY/run/mysqld
-            chown -R 584788 $CRAFT_OVERLAY/etc/mysql
+
+            # Needed for bare base
+            # https://github.com/canonical/rockcraft/issues/193#issuecomment-1429594574
+            mkdir $CRAFT_PART_INSTALL/etc
+            chmod 755 $CRAFT_PART_INSTALL/etc
+
+            # Create a user in the $CRAFT_PART_INSTALL chroot
+            groupadd -R $CRAFT_PART_INSTALL -g 584788 mysql
+            useradd -R $CRAFT_PART_INSTALL --create-home -r -g mysql -u 584788 mysql
+
+            mkdir -p $CRAFT_PART_INSTALL/var/lib/mysql
+            mkdir -p $CRAFT_PART_INSTALL/run/mysqld
+            mkdir -p $CRAFT_PART_INSTALL/etc/mysql
+            chown -R 584788 $CRAFT_PART_INSTALL/var/lib/mysql*
+            chown -R 584788 $CRAFT_PART_INSTALL/run/mysqld
+            chown -R 584788 $CRAFT_PART_INSTALL/etc/mysql
             # Generate dpkg.query
-            mkdir -p $CRAFT_OVERLAY/usr/share/rocks
-            echo "# os-release" > $CRAFT_OVERLAY/usr/share/rocks/dpkg.query
-            echo "# dpkg-query" >> $CRAFT_OVERLAY/usr/share/rocks/dpkg.query
+            mkdir -p $CRAFT_PART_INSTALL/usr/share/rocks
+            echo "# os-release" > $CRAFT_PART_INSTALL/usr/share/rocks/dpkg.query
+            echo "# dpkg-query" >> $CRAFT_PART_INSTALL/usr/share/rocks/dpkg.query
             declare -a fields
             fields+=('${db:Status-Abbrev}')
             fields+=('${binary:Package}')
@@ -67,7 +82,7 @@ parts:
             fields+=('${source:Package}')
             fields+=('${Source:Version}')
             printf -v dpkg_ops '%s,' "${fields[@]}"
-            dpkg-query -W -f "${dpkg_ops}\n" --root=${CRAFT_OVERLAY} >> $CRAFT_OVERLAY/usr/share/rocks/dpkg.query
+            dpkg-query -W -f "${dpkg_ops}\n" --root=${CRAFT_PART_INSTALL} >> $CRAFT_PART_INSTALL/usr/share/rocks/dpkg.query
     rock-entrypoint:
         plugin: dump
         source: .
