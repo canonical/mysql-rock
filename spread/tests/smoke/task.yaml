@@ -14,9 +14,11 @@ execute: |
   mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3432 --user=root --execute="select now();" && exit 1 || true # failure expected
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble start mysql
+  sleep 1
   mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3432 --user=root --execute="select now();"
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble restart mysql
+  sleep 1
   mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3432 --user=root --execute="select now();"
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble logs
