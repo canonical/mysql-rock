@@ -46,7 +46,7 @@ docker run --rm -it --name mysql-container -p 30306:3306 -e MYSQL_ROOT_PASSWORD=
 From inside the container (using socket):
 
 ```bash
-docker exec -it mysql-container mysql --socket=/var/run/mysqld/mysqld.sock --user=root --password=myS3cr3tp@ss
+docker exec -it mysql-container mysql --socket=/run/mysqld/mysqld.sock --user=root --password=myS3cr3tp@ss
 ```
 
 From outside the container:
