@@ -1,15 +1,3 @@
-# Golang CVE fixed in upstream PR
-# https://go-review.googlesource.com/c/go/+/578375
-CVE-2024-24788
-
-# Golang CVE fixed in upstream PR
-# https://go-review.googlesource.com/c/go/+/590296
-CVE-2024-24790
-
-# Golang CVE fixed in upstream PR
-# https://go-review.googlesource.com/c/go/+/611239
-CVE-2024-34156
-
 # Golang CVE. golang pulled from ubuntu archive
 CVE-2025-47907
 CVE-2025-47906
