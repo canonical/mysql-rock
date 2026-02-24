@@ -1,6 +1,6 @@
 name: mysql
 base: ubuntu@24.04
-version: '8.0.44'
+version: '8.0.45'
 summary: MySQL rock OCI
 description: |
     MySQL built from the official MySQL package from the MySQL repository.
@@ -26,7 +26,6 @@ parts:
     mysql:
         plugin: nil
         overlay-packages:
-            - gosu
             - tzdata
             - mysql-client-8.0
             - mysql-server-core-8.0
@@ -35,7 +34,6 @@ parts:
         overlay-script: |
             craftctl default
             mkdir -p $CRAFT_OVERLAY/licenses
-            mv $CRAFT_OVERLAY/usr/share/doc/gosu/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-gosu
             mv $CRAFT_OVERLAY/usr/share/doc/mysql-client-8.0/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-client-8.0
             mv $CRAFT_OVERLAY/usr/share/doc/mysql-server-core-8.0/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-server-core-8.0
             mv $CRAFT_OVERLAY/usr/share/doc/openssl/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-openssl
@@ -93,4 +91,3 @@ parts:
         organize:
             config/conf.d: /etc/mysql/conf.d
             config/my.cnf: /etc/mysql/my.cnf
-
