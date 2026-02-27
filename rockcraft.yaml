@@ -33,6 +33,7 @@ parts:
             - libprotobuf-lite32t64
             - libaio1t64
             - libgoogle-perftools4t64
+            - libmecab2
             - libedit2
             - liblz4-1
             - coreutils-from-uutils
