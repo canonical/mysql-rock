@@ -61,5 +61,6 @@ jobs:
           sudo iptables -F FORWARD
           sudo iptables -P FORWARD ACCEPT
 
-          sudo snap install rockcraft --classic --edge
+          sudo snap install rockcraft --classic
+          sudo snap install craft-sd --channel latest/beta
           sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- rockcraft test

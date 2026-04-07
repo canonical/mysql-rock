@@ -12,7 +12,7 @@ suites:
 
     prepare: |
       # For 'rockcraft.skopeo'
-      snap install rockcraft --classic --edge
+      snap install rockcraft --classic
       snap install docker
 
       # Wait for docker daemon to come online
