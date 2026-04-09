@@ -21,7 +21,7 @@ environment:
 services:
     mysql:
         override: replace
-        command: sh -c "/usr/local/bin/entrypoint.sh mysqld"
+        command: /usr/local/bin/entrypoint.sh mysqld
         startup: enabled
         user: mysql
         group: mysql
