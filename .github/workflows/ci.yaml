@@ -9,20 +9,25 @@ concurrency:
 on:
   pull_request:
 
-permissions: {}
 jobs:
   lint:
     name: Lint
-    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v39.1.0
+    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v46.0.0
+    permissions:
+      contents: read
 
   build:
     name: Build rock
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v39.1.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v46.0.0
+    permissions:
+      actions: read
+      contents: read
 
   test:
     name: Test rock | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
-    timeout-minutes: 10
     runs-on: "ubuntu-${{ matrix.base.version }}${{ matrix.platform.gh_suffix }}"
+    timeout-minutes: 10
+    permissions: {}
     strategy:
       fail-fast: false
       matrix:
