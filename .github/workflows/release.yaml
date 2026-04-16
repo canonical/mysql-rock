@@ -15,7 +15,7 @@ on:
 jobs:
   build:
     name: Build rock
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v48.1.1
     permissions:
       actions: read
       contents: read
@@ -24,7 +24,7 @@ jobs:
     name: Release rock
     needs:
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_rock_edge.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/release_rock_edge.yaml@v48.1.1
     with:
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
     permissions:
@@ -43,7 +43,7 @@ jobs:
       - name: Install Syft
         run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - name: Download rock package(s)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*
           merge-multiple: true
@@ -59,7 +59,7 @@ jobs:
                   check=True,
               )
       - name: Upload SBOM(s)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-${{ needs.build.outputs.artifact-prefix }}
           path: '*.spdx.json'
@@ -73,9 +73,11 @@ jobs:
     permissions: {}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Golang setup
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ">=1.22.0"
       - name: Install dependencies
