@@ -12,13 +12,13 @@ on:
 jobs:
   lint:
     name: Lint
-    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v48.1.1
     permissions:
       contents: read
 
   build:
     name: Build rock
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v48.1.1
     permissions:
       actions: read
       contents: read
@@ -43,7 +43,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Download rock package(s)
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*-${{ matrix.platform.arch }}
           merge-multiple: true
