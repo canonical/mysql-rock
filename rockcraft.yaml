@@ -1,7 +1,7 @@
 name: mysql
 base: bare
 build-base: devel
-version: '8.4.8'
+version: '8.4.9'
 summary: MySQL rock OCI
 description: |
     MySQL built from the official MySQL package from the MySQL repository.
