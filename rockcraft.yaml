@@ -49,7 +49,6 @@ parts:
             usr/share/doc/mysql-client-8.0/copyright: licenses/COPYRIGHT-mysql-client-8.0
             usr/share/doc/mysql-server-core-8.0/copyright: licenses/COPYRIGHT-mysql-server-core-8.0
             usr/share/doc/openssl/copyright: licenses/COPYRIGHT-openssl
-            usr/share/doc/pwgen/copyright: licenses/COPYRIGHT-pwgen
     non-root-user:
         plugin: nil
         after:
