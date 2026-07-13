@@ -27,8 +27,7 @@ suites:
       apt install -y mysql-client
     prepare-each: |
       docker run -d --rm -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss --name "${SPREAD_TASK//\//_}" mysql:spreadtest
-      CONTAINER_IP=$(podman inspect "${SPREAD_TASK//\//_}" --format "{{.NetworkSettings.IPAddress}}")
-      retry --times=30 --delay=2 -- mysql -u root --password=myS3cr3tp@ss --host="$CONTAINER_IP" --port=3306 --execute="select now();"
+      retry --times=30 --delay=2 -- docker exec "${SPREAD_TASK//\//_}" mysql -u root --password=myS3cr3tp@ss --host=127.0.0.1 --protocol=TCP --execute="select now();"
     restore-each: |
       docker kill "${SPREAD_TASK//\//_}" || true
     restore: |
