@@ -4,21 +4,20 @@ execute: |
   echo "Running smoke test..."
 
   echo "Connecting DB..."
-  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3432 --user=root --execute="select now();"
+  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3306 --user=root --execute="select now();"
 
   echo "Connection DB with wrong credentials..."
-  mysql --host 127.0.0.1 --password=wrongpass --port=3432 --user=root --execute="select now();" && exit 1 || true # failure expected
+  mysql --host 127.0.0.1 --password=wrongpass --port=3306 --user=root --execute="select now();" && exit 1 || true # failure expected
 
   echo "Checking Pebble UI..."
   docker exec -t "${SPREAD_TASK//\//_}" pebble stop mysql
-  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3432 --user=root --execute="select now();" && exit 1 || true # failure expected
+  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3306 --user=root --execute="select now();" && exit 1 || true # failure expected
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble start mysql
-  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3432 --user=root --execute="select now();"
+  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3306 --user=root --execute="select now();"
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble restart mysql
-  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3432 --user=root --execute="select now();"
+  mysql --host 127.0.0.1 --password=myS3cr3tp@ss --port=3306 --user=root --execute="select now();"
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble logs
   docker exec -t "${SPREAD_TASK//\//_}" pebble services
-
