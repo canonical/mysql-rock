@@ -26,8 +26,22 @@ suites:
 
       apt install -y mysql-client
     prepare-each: |
+      echo "=== Podman info ==="
+      podman info 2>&1 | grep -E 'rootless|network|cgroup'
+      echo "=== iptables ==="
+      iptables -L -n 2>&1 || true
+      echo "=== Running container ==="
       docker run -d --rm --network=host -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss --name "${SPREAD_TASK//\//_}" mysql:spreadtest
-      # wait for initialization
+      sleep 5
+      echo "=== docker ps ==="
+      docker ps 2>&1
+      echo "=== docker logs ==="
+      docker logs "${SPREAD_TASK//\//_}" 2>&1
+      echo "=== ss -tlnp ==="
+      ss -tlnp 2>&1
+      echo "=== podman inspect network ==="
+      podman inspect "${SPREAD_TASK//\//_}" --format '{{.NetworkSettings}}' 2>&1 || true
+      echo "=== Waiting for MySQL ==="
       retry --times=30 --delay=2 -- mysql -u root --password=myS3cr3tp@ss --host=127.0.0.1 --port=3306 --execute="select now();"
     restore-each: |
       docker kill "${SPREAD_TASK//\//_}" || true
