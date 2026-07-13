@@ -1,8 +1,13 @@
 project: mysql-rock
 
+path: /home/ubuntu/mysql-rock
+
+environment:
+  CRAFT_ARTIFACT: $(HOST:printenv CRAFT_ARTIFACT)
+
 backends:
-  craft:
-    type: craft
+  lxd:
+    type: lxd
     systems:
       - ubuntu-24.04
 
@@ -11,19 +16,14 @@ suites:
     summary: General integration tests
 
     prepare: |
-      # For 'rockcraft.skopeo'
-      snap install rockcraft --classic --edge
-      snap install docker
-
-      # Wait for docker daemon to come online
-      apt install -y retry
-      retry --times=10 --delay 2 -- docker run hello-world
-
-      # Load the rock into docker
-      rockcraft.skopeo --insecure-policy copy "oci-archive:$CRAFT_ARTIFACT" docker-daemon:mysql:spreadtest
-
-      # Install mysql client
       apt update
+      apt install -y podman skopeo podman-docker retry
+
+
+      skopeo copy "oci-archive:${SPREAD_PATH}/$(basename "${CRAFT_ARTIFACT}")" "docker-archive:/tmp/rock-image.tar:mysql:spreadtest"
+      podman load -i /tmp/rock-image.tar
+      podman tag localhost/mysql:spreadtest mysql:spreadtest || true
+
       apt install -y mysql-client
     prepare-each: |
       docker run -d --rm -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss -p 3432:3306 --name "${SPREAD_TASK//\//_}" mysql:spreadtest
@@ -32,7 +32,7 @@ suites:
     restore-each: |
       docker kill "${SPREAD_TASK//\//_}" || true
     restore: |
-      docker image rm --force mysql:spreadtest
+      podman rmi --force mysql:spreadtest || true
 
 exclude:
   - .git

@@ -49,17 +49,18 @@ jobs:
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*-${{ matrix.platform.arch }}
           merge-multiple: true
-      - name: Run tests
+      - name: Install dependencies
         run: |
-          # lxd is necessary for spread
+          go install github.com/canonical/spread/cmd/spread@latest
           sudo snap install lxd
           sudo adduser "$USER" lxd
           # `newgrp` does not work in GitHub Actions; use `sudo --user` instead
-          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd waitready
-          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd init --auto
+          sudo --user "$USER" --preserve-env=PATH -- env -- lxd waitready
+          sudo --user "$USER" --preserve-env=PATH -- env -- lxd init --auto
           # Workaround for Docker & LXD on same machine
           sudo iptables -F FORWARD
           sudo iptables -P FORWARD ACCEPT
-
-          sudo snap install rockcraft --classic --edge
-          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- rockcraft test
+      - name: Run tests
+        run: |
+          ROCK_FILENAME=$(ls -- *.rock)
+          sudo --user "$USER" --preserve-env=CRAFT_ARTIFACT -- env -- CRAFT_ARTIFACT="$(pwd)/$ROCK_FILENAME" "$HOME/go/bin/spread" -v
