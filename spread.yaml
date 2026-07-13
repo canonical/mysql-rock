@@ -19,26 +19,10 @@ suites:
       apt update
       apt install -y podman skopeo podman-docker retry
 
-
       skopeo copy "oci-archive:${SPREAD_PATH}/$(basename "${CRAFT_ARTIFACT}")" "docker-archive:/tmp/rock-image.tar:mysql:spreadtest"
       podman load -i /tmp/rock-image.tar
-      podman tag localhost/mysql:spreadtest mysql:spreadtest || true
-
-      apt install -y mysql-client
     prepare-each: |
-      docker run -d --rm -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss --name "${SPREAD_TASK//\//_}" mysql:spreadtest
-      sleep 10
-      echo "=== docker logs ==="
-      docker logs "${SPREAD_TASK//\//_}" 2>&1
-      echo "=== ps inside container ==="
-      docker exec "${SPREAD_TASK//\//_}" ps aux 2>&1 || true
-      echo "=== ss inside container ==="
-      docker exec "${SPREAD_TASK//\//_}" ss -tlnp 2>&1 || true
-      echo "=== pebble services ==="
-      docker exec "${SPREAD_TASK//\//_}" pebble services 2>&1 || true
-      echo "=== pebble logs ==="
-      docker exec "${SPREAD_TASK//\//_}" pebble logs 2>&1 || true
-      echo "=== Waiting for MySQL ==="
+      docker run -d --rm --cap-add=NET_RAW -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss --name "${SPREAD_TASK//\//_}" mysql:spreadtest
       retry --times=30 --delay=2 -- docker exec "${SPREAD_TASK//\//_}" mysql -u root --password=myS3cr3tp@ss --host=127.0.0.1 --protocol=TCP --execute="select now();"
     restore-each: |
       docker kill "${SPREAD_TASK//\//_}" || true
