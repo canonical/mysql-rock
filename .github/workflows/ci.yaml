@@ -57,6 +57,8 @@ jobs:
           # `newgrp` does not work in GitHub Actions; use `sudo --user` instead
           sudo --user "$USER" --preserve-env=PATH -- env -- lxd waitready
           sudo --user "$USER" --preserve-env=PATH -- env -- lxd init --auto
+          # Allow nested containers (Podman) inside LXD containers
+          lxc profile set default security.nesting true
           # Workaround for Docker & LXD on same machine
           sudo iptables -F FORWARD
           sudo iptables -P FORWARD ACCEPT

@@ -2,11 +2,11 @@ summary: MySQL versions test
 
 execute: |
   echo "Running versions test..."
+  CONTAINER_IP=$(podman inspect "${SPREAD_TASK//\//_}" --format "{{.NetworkSettings.IPAddress}}")
 
   ROCK_VERSION="$(awk '/^version: /{gsub(/'"'"'/, "", $2); print $2;exit}' "${SPREAD_PATH}"/rockcraft.yaml)"
-  mysql --host=127.0.0.1 \
+  mysql --host="${CONTAINER_IP}" \
         --password=myS3cr3tp@ss \
         --port=3306 \
         --user=root \
         --execute="select @@version;" | grep -q -e "^${ROCK_VERSION}"
-
