@@ -13,6 +13,17 @@ backends:
     systems:
       - ubuntu-24.04
 
+  github-ci:
+    type: adhoc
+    manual: true
+    allocate: ADDRESS $(./spread/.extension allocate ci)
+    discard: ./spread/.extension discard ci
+    environment:
+      CI: '$(HOST: echo $CI)'
+    systems:
+      - ubuntu-24.04:
+          username: runner
+
 suites:
   spread/tests/:
     summary: General integration tests

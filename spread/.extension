@@ -104,14 +104,15 @@ allocate_ci() {
         echo "This backend is intended to be used only in CI systems."
         exit 1
     fi
-    sudo sed -i 's/^\s*#\?\s*\(PermitRootLogin\|PasswordAuthentication\)\>.*/\1 yes/' /etc/ssh/sshd_config
-    if [ -d /etc/ssh/sshd_config.d ]; then echo -e 'PermitRootLogin yes\nPasswordAuthentication yes' | sudo tee /etc/ssh/sshd_config.d/00-spread.conf; fi
-    sudo systemctl daemon-reload
-    sudo systemctl restart ssh
+    sudo tee /etc/ssh/sshd_config.d/10-spread-github-ci.conf << 'EOF'
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+EOF
 
-    echo "root:${SPREAD_PASSWORD}" | sudo chpasswd || true
+    sudo passwd --delete "$USER"
 
-    # Print the instance address to stdout
+    sudo systemctl reload ssh || sudo systemctl restart ssh
+
     echo localhost >&3
 }
 
