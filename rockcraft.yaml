@@ -1,6 +1,6 @@
 name: mysql
 base: ubuntu@26.04
-version: '8.4.8'
+version: '9.7.1'
 summary: MySQL rock OCI
 description: |
     MySQL built from the official MySQL package from the MySQL repository.
@@ -25,18 +25,25 @@ services:
 parts:
     mysql:
         plugin: nil
+        stage-snaps:
+            - mysql/9.7/edge
         overlay-packages:
             - tzdata
-            - mysql-client=8.4.8-0ubuntu1
-            - mysql-server-core=8.4.8-0ubuntu1
             - openssl
         overlay-script: |
             craftctl default
             mkdir -p $CRAFT_OVERLAY/licenses
-            mv $CRAFT_OVERLAY/usr/share/doc/mysql-client/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-client
-            mv $CRAFT_OVERLAY/usr/share/doc/mysql-server-core/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-server-core
             mv $CRAFT_OVERLAY/usr/share/doc/openssl/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-openssl
-            rm -rf $CRAFT_OVERLAY/etc/mysql
+        override-prime: |
+            craftctl default
+            # Remove stale snap config files (they reference /var/snap paths)
+            rm -f $CRAFT_PRIME/etc/my.cnf
+            rm -f $CRAFT_PRIME/etc/mysqld.cnf
+            # Remove snap metadata
+            rm -rf $CRAFT_PRIME/meta.mysql
+            # Move MySQL LICENSE
+            mkdir -p $CRAFT_PRIME/licenses
+            find $CRAFT_PRIME/usr/share/ -name 'LICENSE' -path '*/mysql*' -exec mv {} $CRAFT_PRIME/licenses/COPYRIGHT-mysql \;
     non-root-user:
         plugin: nil
         after:
