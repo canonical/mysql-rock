@@ -95,8 +95,21 @@ allocate_lxdvm() {
 }
 
 discard_lxdvm() {
-    instance_name="$(lxc ls -f csv | grep ",$SPREAD_SYSTEM_ADDRESS " | cut -f1 -d",")"
-    lxc delete -f "$instance_name"
+    instance_name="$(lxc ls -f json |
+  jq -r --arg addr "$SPREAD_SYSTEM_ADDRESS" '
+    .[] |
+    select(.type == "virtual-machine") |
+    .name as $name |
+    .state.network |
+    to_entries[] |
+    select(.key != "docker0" and .key != "lo") |
+    .value.addresses[] |
+    select(.family == "inet" and .scope == "global" and .address == $addr) |
+    $name
+  ' | head -1)"
+    if [ -n "$instance_name" ]; then
+        lxc delete -f "$instance_name" || true
+    fi
 }
 
 allocate_ci() {
