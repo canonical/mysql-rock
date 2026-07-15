@@ -41,9 +41,8 @@ parts:
             rm -f $CRAFT_PRIME/etc/mysqld.cnf
             # Remove snap metadata
             rm -rf $CRAFT_PRIME/meta.mysql
-            # Move MySQL LICENSE
-            mkdir -p $CRAFT_PRIME/licenses
-            find $CRAFT_PRIME/usr/share/ -name 'LICENSE' -path '*/mysql*' -exec mv {} $CRAFT_PRIME/licenses/COPYRIGHT-mysql \;
+            # Move MySQL Router LICENSE alongside other MySQL licenses
+            mv $CRAFT_PRIME/usr/LICENSE.router $CRAFT_PRIME/licenses/COPYRIGHT-mysql-router
     non-root-user:
         plugin: nil
         after:
