@@ -25,8 +25,9 @@ jobs:
 
   test:
     name: Test rock | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
-    timeout-minutes: 10
+    permissions: {}
     runs-on: "ubuntu-${{ matrix.base.version }}${{ matrix.platform.gh_suffix }}"
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:

@@ -38,6 +38,7 @@ jobs:
       - build
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions: {}
     steps:
       - name: Install Syft
         run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
@@ -69,6 +70,7 @@ jobs:
     needs:
       - release
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
