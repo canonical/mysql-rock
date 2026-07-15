@@ -1,30 +1,39 @@
 project: mysql-rock
 
+path: /home/ubuntu/mysql-rock
+
+environment:
+  CRAFT_ARTIFACT: $(HOST:printenv CRAFT_ARTIFACT)
+
 backends:
-  craft:
-    type: craft
+  lxd-vm:
+    type: adhoc
+    allocate: ADDRESS $(./spread/.extension allocate lxd-vm)
+    discard: ./spread/.extension discard lxd-vm
     systems:
       - ubuntu-24.04
+
+  github-ci:
+    type: adhoc
+    manual: true
+    allocate: ADDRESS $(./spread/.extension allocate ci)
+    discard: ./spread/.extension discard ci
+    environment:
+      CI: '$(HOST: echo $CI)'
+    systems:
+      - ubuntu-24.04:
+          username: runner
 
 suites:
   spread/tests/:
     summary: General integration tests
 
     prepare: |
-      # For 'rockcraft.skopeo'
-      snap install rockcraft --classic --edge
-      snap install docker
-
-      # Wait for docker daemon to come online
-      apt install -y retry
-      retry --times=10 --delay 2 -- docker run hello-world
-
-      # Load the rock into docker
-      rockcraft.skopeo --insecure-policy copy "oci-archive:$CRAFT_ARTIFACT" docker-daemon:mysql:spreadtest
-
-      # Install mysql client
       apt update
-      apt install -y mysql-client
+      apt install -y retry mysql-client skopeo
+      snap install docker
+      retry --times=10 --delay=2 -- docker run hello-world
+      skopeo --insecure-policy copy "oci-archive:${SPREAD_PATH}/$(basename "${CRAFT_ARTIFACT}")" docker-daemon:mysql:spreadtest
     prepare-each: |
       docker run -d --rm -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss -p 3432:3306 --name "${SPREAD_TASK//\//_}" mysql:spreadtest
       # wait for initialization
@@ -32,7 +41,7 @@ suites:
     restore-each: |
       docker kill "${SPREAD_TASK//\//_}" || true
     restore: |
-      docker image rm --force mysql:spreadtest
+      docker image rm --force mysql:spreadtest || true
 
 exclude:
   - .git
