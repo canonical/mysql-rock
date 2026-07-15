@@ -118,8 +118,8 @@ allocate_ci() {
         exit 1
     fi
     sudo tee /etc/ssh/sshd_config.d/10-spread-github-ci.conf << 'EOF'
-PasswordAuthentication yes
-PermitEmptyPasswords yes
+    PasswordAuthentication yes
+    PermitEmptyPasswords yes
 EOF
 
     sudo passwd --delete "$USER"
