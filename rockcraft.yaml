@@ -9,7 +9,7 @@ license: Apache-2.0
 platforms:
     amd64:
     arm64:
-    s390x:
+    #s390x:  # No s390x snap available yet, restore when it's available
 
 environment:
     TZ: UTC
