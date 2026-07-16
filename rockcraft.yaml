@@ -1,6 +1,6 @@
 name: mysql
 base: ubuntu@26.04
-version: '8.4.8'
+version: '9.7.1'
 summary: MySQL rock OCI
 description: |
     MySQL built from the official MySQL package from the MySQL repository.
@@ -9,7 +9,7 @@ license: Apache-2.0
 platforms:
     amd64:
     arm64:
-    s390x:
+    #s390x:  # No s390x snap available yet, restore when it's available
 
 environment:
     TZ: UTC
@@ -25,18 +25,24 @@ services:
 parts:
     mysql:
         plugin: nil
+        stage-snaps:
+            - mysql/9.7/edge
         overlay-packages:
             - tzdata
-            - mysql-client=8.4.8-0ubuntu1
-            - mysql-server-core=8.4.8-0ubuntu1
             - openssl
         overlay-script: |
             craftctl default
             mkdir -p $CRAFT_OVERLAY/licenses
-            mv $CRAFT_OVERLAY/usr/share/doc/mysql-client/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-client
-            mv $CRAFT_OVERLAY/usr/share/doc/mysql-server-core/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-mysql-server-core
             mv $CRAFT_OVERLAY/usr/share/doc/openssl/copyright $CRAFT_OVERLAY/licenses/COPYRIGHT-openssl
-            rm -rf $CRAFT_OVERLAY/etc/mysql
+        override-prime: |
+            craftctl default
+            # Remove stale snap config files (they reference /var/snap paths)
+            rm -f $CRAFT_PRIME/etc/my.cnf
+            rm -f $CRAFT_PRIME/etc/mysqld.cnf
+            # Remove snap metadata
+            rm -rf $CRAFT_PRIME/meta.mysql
+            # Move MySQL Router LICENSE alongside other MySQL licenses
+            mv $CRAFT_PRIME/usr/LICENSE.router $CRAFT_PRIME/licenses/COPYRIGHT-mysql-router
     non-root-user:
         plugin: nil
         after:
