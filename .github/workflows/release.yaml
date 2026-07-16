@@ -11,6 +11,16 @@ on:
     branches:
       - 9.7/edge
   workflow_dispatch:
+    inputs:
+      risk:
+        description: Releases this rock to desired risk
+        required: true
+        type: choice
+        options:
+          - edge
+          - beta
+          - candidate
+          - stable
 
 jobs:
   build:
@@ -87,6 +97,13 @@ jobs:
       - name: Set binary paths to environment
         run: |
           echo OCI_FACTORY="$(go env GOPATH)/bin/oci-factory" >> "${GITHUB_ENV}"
+      - name: Set release risk to environment
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo TARGET_RISK=${{ inputs.risk }} >> "${GITHUB_ENV}"
+          else
+            echo TARGET_RISK=edge >> "${GITHUB_ENV}"
+          fi
       - name: Set image version to environment
         run: |
           {
@@ -98,6 +115,6 @@ jobs:
       - name: Release
         run: |
           "${OCI_FACTORY}" upload -y --release \
-            track="${MYSQL_MAJOR_VERSION}.${MYSQL_MINOR_VERSION}-${OS_VERSION},eol=${END_OF_LIFE},risks=edge"
+            track="${MYSQL_MAJOR_VERSION}.${MYSQL_MINOR_VERSION}-${OS_VERSION},eol=${END_OF_LIFE},risks=${TARGET_RISK}"
         env:
           GITHUB_TOKEN: ${{ secrets.DP_BOT_PAT }}
