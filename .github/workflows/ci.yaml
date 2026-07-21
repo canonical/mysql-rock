@@ -12,16 +12,21 @@ on:
 jobs:
   lint:
     name: Lint
-    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v50
+    permissions:
+      contents: read
 
   build:
     name: Build rock
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v50
+    permissions:
+      contents: read
 
   test:
     name: Test rock | ${{ matrix.base.version }} ${{ matrix.platform.arch }}
-    timeout-minutes: 10
+    permissions: {}
     runs-on: "ubuntu-${{ matrix.base.version }}${{ matrix.platform.gh_suffix }}"
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -35,23 +40,18 @@ jobs:
       - build
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Download rock package(s)
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           pattern: ${{ needs.build.outputs.artifact-prefix }}-*-${{ matrix.platform.arch }}
           merge-multiple: true
+      - name: Install dependencies
+        run: |
+          go install github.com/canonical/spread/cmd/spread@latest
       - name: Run tests
         run: |
-          # lxd is necessary for spread
-          sudo snap install lxd
-          sudo adduser "$USER" lxd
-          # `newgrp` does not work in GitHub Actions; use `sudo --user` instead
-          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd waitready
-          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- lxd init --auto
-          # Workaround for Docker & LXD on same machine
-          sudo iptables -F FORWARD
-          sudo iptables -P FORWARD ACCEPT
-
-          sudo snap install rockcraft --classic --edge
-          sudo --user "$USER" --preserve-env --preserve-env=PATH -- env -- rockcraft test
+          ROCK_FILENAME=$(ls -- *.rock)
+          CRAFT_ARTIFACT="$(pwd)/$ROCK_FILENAME" "$HOME/go/bin/spread" -v github-ci:

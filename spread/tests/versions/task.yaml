@@ -9,4 +9,3 @@ execute: |
         --port=3432 \
         --user=root \
         --execute="select @@version;" | grep -q -e "^${ROCK_VERSION}"
-

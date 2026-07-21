@@ -15,17 +15,18 @@ on:
 jobs:
   build:
     name: Build rock
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v50
+    permissions:
+      contents: read
 
   release:
     name: Release rock
     needs:
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_rock_edge.yaml@v46.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/release_rock_edge.yaml@v50
     with:
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
     permissions:
-      actions: read    # Needed for GitHub API call to get workflow version
       packages: write  # Needed to publish to GitHub Container Registry
       contents: write  # Needed to create git tags
 
@@ -35,6 +36,7 @@ jobs:
       - build
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions: {}
     steps:
       - name: Install Syft
         run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
@@ -66,9 +68,12 @@ jobs:
     needs:
       - release
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Golang setup
         uses: actions/setup-go@v5
         with:

@@ -21,4 +21,3 @@ execute: |
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble logs
   docker exec -t "${SPREAD_TASK//\//_}" pebble services
-
