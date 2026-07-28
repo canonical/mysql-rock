@@ -1,5 +1,11 @@
 summary: MySQL rock smoke tests
 
+prepare: |
+  docker run -d -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss -p 3432:3306 --name "${SPREAD_TASK//\//_}" mysql:spreadtest
+
+  retry --times=30 --delay=2 -- \
+    docker exec "${SPREAD_TASK//\//_}" mysql --host 127.0.0.1 --password=myS3cr3tp@ss --user=root --execute="select now();"
+
 execute: |
   echo "Running smoke test..."
 
@@ -21,3 +27,6 @@ execute: |
 
   docker exec -t "${SPREAD_TASK//\//_}" pebble logs
   docker exec -t "${SPREAD_TASK//\//_}" pebble services
+
+restore: |
+  docker rm --force "${SPREAD_TASK//\//_}" || true    
