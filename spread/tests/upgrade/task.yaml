@@ -9,15 +9,15 @@ execute: |
   echo "Creating Docker named volume (used as persistent data directory)..."
   docker volume create "${VOLUME_NAME}"
 
-  echo "Pulling 8.0/edge image from Docker Hub..."
-  docker pull ubuntu/mysql:8.0-24.04_edge
+  echo "Pulling 8.0/edge image from GHCR..."
+  docker pull ghcr.io/canonical/mysql:8.0.46-24.04_edge
 
   echo "Starting 8.0/edge MySQL container..."
   docker run -d \
     --env MYSQL_ROOT_PASSWORD="${ROOT_PASSWORD}" \
     --volume "${VOLUME_NAME}:/var/lib/mysql" \
     --name "${CONTAINER_OLD}" \
-    ubuntu/mysql:8.0-24.04_edge
+    ghcr.io/canonical/mysql:8.0.46-24.04_edge
 
   echo "Waiting for 8.0/edge MySQL to be ready..."
   retry --times=30 --delay=2 -- \
