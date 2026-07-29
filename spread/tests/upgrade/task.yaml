@@ -1,0 +1,59 @@
+summary: MySQL upgrade tests
+
+execute: |
+  ROOT_PASSWORD="myS3cr3tp@ss"
+  CONTAINER_OLD="mysql-upgrade-old"
+  CONTAINER_NEW="mysql-upgrade-new"
+  VOLUME_NAME="mysql-upgrade-volume"
+  IMAGE_TAG="8.4.10-26.04_edge"
+
+  echo "Creating Docker named volume (used as persistent data directory)..."
+  docker volume create "${VOLUME_NAME}"
+
+  echo "Pulling 8.4/edge image from GHCR..."
+  docker pull ghcr.io/canonical/mysql:${IMAGE_TAG}
+
+  echo "Starting 8.4/edge MySQL container..."
+  docker run -d \
+    --env MYSQL_ROOT_PASSWORD="${ROOT_PASSWORD}" \
+    --volume "${VOLUME_NAME}:/var/lib/mysql" \
+    --name "${CONTAINER_OLD}" \
+    ghcr.io/canonical/mysql:${IMAGE_TAG}
+
+  echo "Waiting for 8.4/edge MySQL to be ready..."
+  retry --times=30 --delay=2 -- \
+    docker exec "${CONTAINER_OLD}" mysql --host=127.0.0.1 --user=root --password="${ROOT_PASSWORD}" --execute="
+      SELECT NOW();
+    "
+
+  echo "Creating test database and table..."
+  docker exec "${CONTAINER_OLD}" mysql --host=127.0.0.1 --user=root --password="${ROOT_PASSWORD}" --execute="
+    CREATE DATABASE test_db;
+    CREATE TABLE test_db.test_table (id SERIAL PRIMARY KEY, name TEXT);
+  "
+
+  echo "Tearing down 8.4/edge container (volume is retained)..."
+  docker rm --force "${CONTAINER_OLD}"
+
+  echo "Starting CI MySQL container with the same volume..."
+  docker run -d \
+    --env MYSQL_ROOT_PASSWORD="${ROOT_PASSWORD}" \
+    --volume "${VOLUME_NAME}:/var/lib/mysql" \
+    --name "${CONTAINER_NEW}" \
+    mysql:spreadtest
+
+  echo "Waiting for CI MySQL to be ready..."
+  retry --times=30 --delay=2 -- \
+    docker exec "${CONTAINER_NEW}" mysql --host=127.0.0.1 --user=root --password="${ROOT_PASSWORD}" --execute="
+      SELECT NOW();
+    "
+
+  echo "Verifying data is readable after upgrade..."
+  docker exec "${CONTAINER_NEW}" mysql --host=127.0.0.1 --user=root --password="${ROOT_PASSWORD}" --execute="
+    SELECT * FROM test_db.test_table;
+  "
+
+restore: |
+  docker rm --force mysql-upgrade-old || true                                                                                                                                                                 
+  docker rm --force mysql-upgrade-new || true                                                                                                                                                                 
+  docker volume rm mysql-upgrade-volume || true 
