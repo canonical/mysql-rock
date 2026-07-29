@@ -5,19 +5,20 @@ execute: |
   CONTAINER_OLD="mysql-upgrade-old"
   CONTAINER_NEW="mysql-upgrade-new"
   VOLUME_NAME="mysql-upgrade-volume"
+  IMAGE_TAG="9.7.1-26.04_edge"
 
   echo "Creating Docker named volume (used as persistent data directory)..."
   docker volume create "${VOLUME_NAME}"
 
   echo "Pulling 9.7/edge image from GHCR..."
-  docker pull ghcr.io/canonical/mysql:9.7.1-26.04_edge
+  docker pull ghcr.io/canonical/mysql:${IMAGE_TAG}
 
   echo "Starting 9.7/edge MySQL container..."
   docker run -d \
     --env MYSQL_ROOT_PASSWORD="${ROOT_PASSWORD}" \
     --volume "${VOLUME_NAME}:/var/lib/mysql" \
     --name "${CONTAINER_OLD}" \
-    ghcr.io/canonical/mysql:9.7.1-26.04_edge
+    ghcr.io/canonical/mysql:${IMAGE_TAG}
 
   echo "Waiting for 9.7/edge MySQL to be ready..."
   retry --times=30 --delay=2 -- \
