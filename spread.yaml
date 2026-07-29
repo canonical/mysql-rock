@@ -34,12 +34,6 @@ suites:
       snap install docker
       retry --times=10 --delay=2 -- docker run hello-world
       skopeo --insecure-policy copy "oci-archive:${SPREAD_PATH}/$(basename "${CRAFT_ARTIFACT}")" docker-daemon:mysql:spreadtest
-    prepare-each: |
-      docker run -d --rm -e MYSQL_ROOT_PASSWORD=myS3cr3tp@ss -p 3432:3306 --name "${SPREAD_TASK//\//_}" mysql:spreadtest
-      # wait for initialization
-      docker exec "${SPREAD_TASK//\//_}" bash -c 'until mysql -u root --password=myS3cr3tp@ss -h localhost -e "select now();"; do sleep 1; done'
-    restore-each: |
-      docker kill "${SPREAD_TASK//\//_}" || true
     restore: |
       docker image rm --force mysql:spreadtest || true
 
