@@ -1,6 +1,6 @@
 name: mysql
 base: ubuntu@26.04
-version: '9.7.1'
+version: '9.7.2'
 summary: MySQL rock OCI
 description: |
     MySQL built from the official MySQL package from the MySQL repository.
