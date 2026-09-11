@@ -1,6 +1,6 @@
 name: mysql
 base: ubuntu@26.04
-version: '8.4.10'
+version: '8.4.11'
 summary: MySQL rock OCI
 description: |
     MySQL built from the official MySQL package from the MySQL repository.
@@ -27,8 +27,8 @@ parts:
         plugin: nil
         overlay-packages:
             - tzdata
-            - mysql-client=8.4.10-0ubuntu0.26.04.1
-            - mysql-server-core=8.4.10-0ubuntu0.26.04.1
+            - mysql-client=8.4.11-0ubuntu0.26.04.1
+            - mysql-server-core=8.4.11-0ubuntu0.26.04.1
             - openssl
         overlay-script: |
             craftctl default
