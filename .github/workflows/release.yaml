@@ -22,23 +22,27 @@ on:
           - candidate
           - stable
 
+permissions: {}
+
 jobs:
   build:
     name: Build rock
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v50
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v53
     permissions:
       contents: read
+    cache-mode: none
 
   release:
     name: Release rock
     needs:
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_rock_edge.yaml@v50
+    uses: canonical/data-platform-workflows/.github/workflows/release_rock_edge.yaml@v53
     with:
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
     permissions:
       packages: write  # Needed to publish to GitHub Container Registry
       contents: write  # Needed to create git tags
+    cache-mode: none
 
   sbom:
     name: Generate Software Bill of Materials
@@ -47,6 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
+    cache-mode: none
     steps:
       - name: Install Syft
         run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
@@ -79,13 +84,14 @@ jobs:
       - release
     runs-on: ubuntu-latest
     permissions: {}
+    cache-mode: none
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Golang setup
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: ">=1.22.0"
       - name: Install dependencies
@@ -98,9 +104,11 @@ jobs:
         run: |
           echo OCI_FACTORY="$(go env GOPATH)/bin/oci-factory" >> "${GITHUB_ENV}"
       - name: Set release risk to environment
+        env:
+          RISK: ${{ inputs.risk }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            echo TARGET_RISK=${{ inputs.risk }} >> "${GITHUB_ENV}"
+            echo TARGET_RISK="$RISK" >> "${GITHUB_ENV}"
           else
             echo TARGET_RISK=edge >> "${GITHUB_ENV}"
           fi
