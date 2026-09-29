@@ -28,6 +28,7 @@ jobs:
     uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v53
     permissions:
       contents: read
+    cache-mode: none
 
   release:
     name: Release rock
@@ -39,6 +40,7 @@ jobs:
     permissions:
       packages: write  # Needed to publish to GitHub Container Registry
       contents: write  # Needed to create git tags
+    cache-mode: none
 
   sbom:
     name: Generate Software Bill of Materials
@@ -47,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
+    cache-mode: none
     steps:
       - name: Install Syft
         run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
@@ -79,6 +82,7 @@ jobs:
       - release
     runs-on: ubuntu-latest
     permissions: {}
+    cache-mode: none
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
