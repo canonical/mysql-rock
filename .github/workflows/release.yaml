@@ -22,6 +22,8 @@ on:
           - candidate
           - stable
 
+permissions: {}
+
 jobs:
   build:
     name: Build rock
@@ -102,9 +104,11 @@ jobs:
         run: |
           echo OCI_FACTORY="$(go env GOPATH)/bin/oci-factory" >> "${GITHUB_ENV}"
       - name: Set release risk to environment
+        env:
+          RISK: ${{ inputs.risk }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            echo TARGET_RISK=${{ inputs.risk }} >> "${GITHUB_ENV}"
+            echo TARGET_RISK="$RISK" >> "${GITHUB_ENV}"
           else
             echo TARGET_RISK=edge >> "${GITHUB_ENV}"
           fi

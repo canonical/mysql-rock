@@ -9,9 +9,11 @@ concurrency:
 on:
   pull_request:
 
+permissions: {}
+
 jobs:
-  lint:
-    name: Lint
+  lint-workflows:
+    name: Lint workflows
     uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v53
     permissions:
       contents: read
@@ -38,7 +40,7 @@ jobs:
           - { os: linux, arch: amd64, host_arch: x64, gh_suffix: "" }
           - { os: linux, arch: arm64, host_arch: arm64, gh_suffix: "-arm" }
     needs:
-      - lint
+      - lint-workflows
       - build
     cache-mode: none
     steps:
