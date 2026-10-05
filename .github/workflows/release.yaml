@@ -42,7 +42,6 @@ jobs:
     permissions:
       packages: write  # Needed to publish to GitHub Container Registry
       contents: write  # Needed to create git tags
-      workflows: write  # Needed to push tags whose commits modify workflow files
     cache-mode: none
 
   sbom:
