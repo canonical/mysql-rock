@@ -1,0 +1,39 @@
+# ONE-OFF workflow: dispatches canonical/oci-factory's Image.yaml with a
+# handcrafted trigger that shortens the EOL of the retired `8.4-24.04` track
+# (edge-only proof of concept, superseded by the 26.04-based track; unbuildable
+# since the PPA data-platform/mysql-8.4 was deleted from Launchpad).
+#
+# This exists only because dispatching oci-factory's Image.yaml requires a
+# token with admin rights on that repository (HTTP 403 otherwise); the
+# DP_BOT_PAT secret is the credential routinely used for this by the
+# "Release to GHCR" workflow (via the oci-factory CLI).
+#
+# Delete this workflow and retire-8.4-24.04-image-trigger.yaml as soon as the
+# dispatched run completes successfully.
+#
+# Reference: https://github.com/canonical/oci-factory/pull/1258
+name: Retire 8.4-24.04 track (one-off)
+
+on:
+  workflow_dispatch: {}   # dispatch-only, no inputs: no injection surface
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Dispatch oci-factory Image.yaml with handcrafted trigger
+        env:
+          GH_TOKEN: ${{ secrets.DP_BOT_PAT }}
+        run: |
+          B64=$(base64 -w0 retire-8.4-24.04-image-trigger.yaml)
+          gh api repos/canonical/oci-factory/actions/workflows/Image.yaml/dispatches \
+            -f ref=main \
+            -f 'inputs[oci-image-name]=mysql' \
+            -f 'inputs[b64-image-trigger]='"$B64" \
+            -f 'inputs[upload]=true'

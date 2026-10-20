@@ -1,0 +1,57 @@
+# One-off OCI-Factory trigger to shorten the end-of-life of the retired
+# `8.4-24.04` track through the sanctioned release path (no manual edits to
+# the machine-generated `oci/mysql/_releases.json`).
+#
+# Background:
+#   - Track `8.4-24.04` was a proof of concept, superseded by PR #36
+#     ("Bump base to Ubuntu 26.04", merged 2026-05-28). It is edge-only and
+#     frozen at revision 173 (last successful build 2026-06-29, commit
+#     40fc6da7). It became unbuildable in 2026-07 (PPA `data-platform/mysql-8.4`
+#     was deleted from Launchpad; 24.04 builds have failed with PPA-404 since).
+#   - See canonical/oci-factory#1258 for the maintainer discussion.
+#
+# What this trigger does:
+#   - `upload`: routine release of the current 8.4/edge HEAD (2436b6a2,
+#     MySQL 8.4.11, base 26.04) into track `8.4-26.04`, requesting `stable`
+#     so all four risks cascade, exactly like the previous promotion.
+#     The end-of-life is pinned to the CURRENT value (2031-10-05) so this
+#     run does NOT move that track's EOL (no rolling +5y inflation).
+#   - `release`: static entry for `8.4-24.04` pointing at the already
+#     published revision 173 with a shortened EOL (2027-01-20, +3 months).
+#     Nothing is built for this track; the release step only re-publishes
+#     the existing revision-173 digest and updates its EOL in
+#     `_releases.json`.
+#
+# Aftermath:
+#   - The bi-daily rebuild of revision 173 keeps failing (PPA-404) until
+#     the EOL date passes; then the track is silently dropped from the
+#     rebuild matrix and the failures stop.
+#   - To retire the track IMMEDIATELY instead, set the EOL below to the
+#     current date or any past date.
+#
+# Dispatched by the companion workflow `retire-8.4-24.04.yaml`, which runs
+# the equivalent of:
+#   gh workflow run Image.yaml --repo canonical/oci-factory --ref main \
+#     -f oci-image-name=mysql \
+#     -f b64-image-trigger="$(base64 -w0 retire-8.4-24.04-image-trigger.yaml)" \
+#     -f upload=true
+#
+# Preconditions:
+#   - Approval from oci-factory maintainers (zhijie-yang / cjdcordeiro).
+#   - No other mysql Image/Release run in flight (avoids _releases.json
+#     merge races).
+
+version: 2
+upload:
+  - source: canonical/mysql-rock
+    commit: 2436b6a2b44249d4a8f80fa80e8a60b857e62330
+    directory: .
+    release:
+      8.4-26.04:
+        end-of-life: "2031-10-05T00:00:00Z"
+        risks:
+          - stable
+release:
+  8.4-24.04:
+    end-of-life: "2027-01-20T00:00:00Z"
+    edge: "173"
