@@ -5,7 +5,7 @@ execute: |
   CONTAINER_OLD="mysql-upgrade-old"
   CONTAINER_NEW="mysql-upgrade-new"
   VOLUME_NAME="mysql-upgrade-volume"
-  IMAGE_TAG="8.4.10-26.04_edge"
+  IMAGE_TAG="8.4.11-26.04_edge"
 
   echo "Creating Docker named volume (used as persistent data directory)..."
   docker volume create "${VOLUME_NAME}"
