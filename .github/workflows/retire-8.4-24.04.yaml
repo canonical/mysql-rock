@@ -8,6 +8,10 @@
 # DP_BOT_PAT secret is the credential routinely used for this by the
 # "Release to GHCR" workflow (via the oci-factory CLI).
 #
+# The trigger's `upload` section is the minimal vehicle required for the
+# release step to run (see the trigger file's comments); the dispatch
+# passes upload=true as usual.
+#
 # Delete this workflow and retire-8.4-24.04-image-trigger.yaml as soon as the
 # dispatched run completes successfully.
 #

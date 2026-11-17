@@ -11,16 +11,27 @@
 #   - See canonical/oci-factory#1258 for the maintainer discussion.
 #
 # What this trigger does:
-#   - `upload`: routine release of the current 8.4/edge HEAD (2436b6a2,
-#     MySQL 8.4.11, base 26.04) into track `8.4-26.04`, requesting `stable`
-#     so all four risks cascade, exactly like the previous promotion.
-#     The end-of-life is pinned to the CURRENT value (2031-10-05) so this
-#     run does NOT move that track's EOL (no rolling +5y inflation).
 #   - `release`: static entry for `8.4-24.04` pointing at the already
 #     published revision 173 with a shortened EOL (2027-01-20, +3 months).
 #     Nothing is built for this track; the release step only re-publishes
 #     the existing revision-173 digest and updates its EOL in
 #     `_releases.json`.
+#   - `upload`: a minimal, required vehicle for the release step to run.
+#     A release-only trigger is NOT viable with current oci-factory code:
+#     with `upload=false` the `prepare-releases` job is skipped (it needs
+#     `prepare-upload`), and with an empty upload list
+#     `preempt_swift_slots.sh` fails (swift upload on an empty staging
+#     dir). The entry below re-releases the current 8.4/edge HEAD
+#     (1745877, MySQL 8.4.13, base 26.04) into `8.4-26.04` at `edge`
+#     risk only — no `stable` promotion. The digest is identical to the
+#     already-published revision 195, so edge simply re-points to the
+#     rebuilt revision; the track EOL is pinned to its CURRENT value
+#     (2031-11-13) so this run does NOT move that track's EOL.
+#
+# Note: an earlier version of this trigger bundled an `upload` of MySQL
+# 8.4.11 (the then-current 8.4/edge HEAD) requesting `stable`. That
+# deadlocked the whole run: Ubuntu superseded 8.4.11 with 8.4.13, making
+# the pinned packages unbuildable.
 #
 # Aftermath:
 #   - The bi-daily rebuild of revision 173 keeps failing (PPA-404) until
@@ -44,13 +55,13 @@
 version: 2
 upload:
   - source: canonical/mysql-rock
-    commit: 2436b6a2b44249d4a8f80fa80e8a60b857e62330
+    commit: 1745877d11b65cca306f8de33b4bd54e9db518f8
     directory: .
     release:
       8.4-26.04:
-        end-of-life: "2031-10-05T00:00:00Z"
+        end-of-life: "2031-11-13T00:00:00Z"
         risks:
-          - stable
+          - edge
 release:
   8.4-24.04:
     end-of-life: "2027-01-20T00:00:00Z"
